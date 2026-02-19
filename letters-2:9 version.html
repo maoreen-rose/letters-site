@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>How Lucky Am I</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Courier+Prime&family=Nothing+You+Could+Do&display=swap" rel="stylesheet"/>
+<link href="https://fonts.cdnfonts.com/css/louis-george-cafe" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#F6F3ED;--slate:#C2CBD3;--navy:#313851;--navy-faint:#7a8098;--oak:#8B6943;--oak-dark:#5C4228;--felt:#2A3528;--silver:#B8BCC8;--silver-light:#D8DCE4;--chrome:#E8ECF0;--ink:#313851;--paper:#f5f1ea}
+html,body{width:100%;min-height:100vh;margin:0;background:var(--bg);overflow-x:hidden;color:var(--navy)}
+body{font-family:'Louis George Cafe',sans-serif;background:var(--bg);background-image:radial-gradient(ellipse at 30% 25%,rgba(194,203,211,0.15) 0%,transparent 50%)}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:.3}50%{opacity:.85}}
+@keyframes handwrite{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0% 0 0)}}
+@keyframes fadeInLine{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+#app{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px}
+.main-stage{position:relative;width:100%;max-width:1200px;display:flex;align-items:center;justify-content:center;gap:20px;transition:all .9s cubic-bezier(.25,.8,.25,1)}
+.main-stage.split{justify-content:space-between}
+
+/* ═══ TURNTABLE ═══ */
+.turntable-wrap{position:relative;flex-shrink:0;width:clamp(370px,48vw,520px);aspect-ratio:1/1;z-index:5;transition:all .9s cubic-bezier(.25,.8,.25,1)}
+.main-stage.split .turntable-wrap{width:clamp(310px,44vw,480px)}
+.turntable-svg{width:100%;height:100%;display:block;filter:drop-shadow(0 12px 45px rgba(49,56,81,0.13))}
+
+/* ═══ POEM PANEL ═══ */
+.poem-panel{
+  position:relative;flex-shrink:0;
+  width:0;max-width:0;overflow:hidden;opacity:0;
+  height:clamp(420px,78vh,620px);
+  background:var(--paper);
+  border:1.5px solid rgba(194,203,211,0.25);border-radius:16px;
+  box-shadow:0 20px 70px rgba(49,56,81,0.08),0 2px 8px rgba(49,56,81,0.04),inset 0 1px 0 rgba(255,255,255,0.35);
+  z-index:10;display:flex;flex-direction:column;
+  transition:all .8s cubic-bezier(.25,.8,.25,1);
+  user-select:none;
+}
+/* Paper texture */
+.poem-panel::before{content:'';position:absolute;inset:0;border-radius:16px;pointer-events:none;z-index:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 28px,rgba(180,170,155,0.06) 28px,rgba(180,170,155,0.06) 29px),
+  repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(180,170,155,0.03) 40px,rgba(180,170,155,0.03) 41px)}
+.poem-panel::after{content:'';position:absolute;inset:0;border-radius:16px;pointer-events:none;z-index:1;opacity:.45;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.08'/%3E%3C/svg%3E");mix-blend-mode:multiply}
+.paper-texture{position:absolute;inset:0;border-radius:16px;pointer-events:none;z-index:1;overflow:hidden;
+  background:radial-gradient(ellipse at 15% 20%,rgba(160,148,130,0.06) 0%,transparent 50%),
+  radial-gradient(ellipse at 80% 70%,rgba(160,148,130,0.05) 0%,transparent 45%),
+  radial-gradient(ellipse at 50% 10%,rgba(200,192,178,0.04) 0%,transparent 60%),
+  radial-gradient(ellipse at 30% 85%,rgba(170,158,140,0.05) 0%,transparent 40%)}
+.paper-fold{position:absolute;top:0;bottom:0;left:50%;width:1px;pointer-events:none;z-index:1;
+  background:linear-gradient(to bottom,transparent 5%,rgba(160,148,130,0.08) 20%,rgba(160,148,130,0.12) 50%,rgba(160,148,130,0.08) 80%,transparent 95%)}
+
+.poem-panel.open{width:calc(50% - 10px);max-width:calc(50% - 10px);opacity:1}
+.poem-panel.dragging{transition:none!important;box-shadow:0 28px 80px rgba(49,56,81,0.14)}
+.poem-panel.detached{position:fixed!important;flex-shrink:unset!important;z-index:50}
+/* Fly-to-screen animation */
+.poem-panel.flying{
+  transition:all .7s cubic-bezier(.6,.05,.4,1)!important;
+  opacity:0!important;transform:scale(0.05)!important;
+  border-radius:6px!important;
+}
+
+/* Drag handle */
+.panel-handle{height:22px;display:flex;align-items:center;justify-content:center;cursor:grab;flex-shrink:0;position:relative;z-index:2}
+.panel-handle:active{cursor:grabbing}
+.panel-handle span{width:36px;height:3px;background:var(--navy);border-radius:2px;opacity:.15}
+
+/* Scroll area */
+.poem-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:4px 32px 24px;scrollbar-width:thin;scrollbar-color:rgba(49,56,81,0.08) transparent;position:relative;z-index:2}
+.poem-scroll::-webkit-scrollbar{width:3px}
+.poem-scroll::-webkit-scrollbar-thumb{background:rgba(49,56,81,0.08);border-radius:3px}
+.panel-fade-t,.panel-fade-b{position:absolute;left:0;right:0;height:24px;z-index:3;pointer-events:none}
+.panel-fade-t{top:22px;background:linear-gradient(to bottom,var(--paper),transparent)}
+.panel-fade-b{bottom:0;background:linear-gradient(to top,var(--paper),transparent)}
+
+/* Poem text — Nothing You Could Do */
+.poem-line{
+  font-family:'Nothing You Could Do',cursive;color:var(--ink);
+  font-size:clamp(.88rem,1.7vw,1.05rem);line-height:2.2;
+  opacity:0;display:block;white-space:nowrap;overflow:hidden;
+}
+.poem-line.revealed{animation:fadeInLine .25s ease forwards,handwrite var(--hw-dur,.7s) ease-out forwards;opacity:1}
+.poem-line.done{opacity:1;clip-path:none;animation:none}
+.poem-line.empty{height:1.1em}
+
+/* Author credit */
+.poem-credit{font-family:'Alex Brush',cursive;color:var(--oak);font-size:clamp(1.2rem,2.8vw,1.5rem);margin-top:20px;text-align:right;padding-right:8px;opacity:0;transition:opacity .6s;position:relative;z-index:2}
+.poem-credit.vis{opacity:.7}
+.poem-credit .hw{display:inline-block;animation:handwrite 2s ease-out both}
+
+.scroll-hint{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);z-index:4;font-family:'Louis George Cafe',sans-serif;font-size:.48rem;color:var(--navy-faint);opacity:0;transition:opacity .5s;pointer-events:none;background:rgba(245,241,234,0.8);padding:2px 8px;border-radius:8px}
+.scroll-hint.show{opacity:.4}
+
+.hint{font-family:'Louis George Cafe',sans-serif;color:var(--navy-faint);text-align:center;margin-top:14px;font-size:clamp(.76rem,1.8vw,.86rem)}
+.hint-pulse{animation:pulse 2.5s ease-in-out infinite}
+.controls-row{display:flex;gap:10px;align-items:center;justify-content:center;margin-top:12px}
+.ctrl-btn{font-family:'Louis George Cafe',sans-serif;padding:7px 20px;border-radius:20px;border:1.5px solid var(--slate);background:transparent;color:var(--navy);font-size:.78rem;cursor:pointer;transition:all .25s}
+.ctrl-btn:hover{background:var(--navy);color:var(--bg);border-color:var(--navy)}
+.ctrl-btn:active{transform:scale(.95)}
+.ctrl-btn.stop{border-color:#B8434A;color:#B8434A}
+.ctrl-btn.stop:hover{background:#B8434A;color:#fff}
+.replay-btn{font-family:Georgia,serif;font-style:italic;color:var(--navy);font-size:clamp(.88rem,2.2vw,1.05rem);text-align:center;margin-top:20px;cursor:pointer;padding:10px 32px;border:1.5px solid var(--slate);border-radius:26px;background:transparent;transition:all .3s}
+.replay-btn:hover{background:var(--navy);color:var(--bg);border-color:var(--navy)}
+.credits{font-family:Georgia,serif;font-style:italic;color:var(--navy-faint);font-size:.52rem;text-align:center;margin-top:24px;opacity:.2;line-height:1.8}
+
+@media(max-width:800px){
+  .main-stage{flex-direction:column;gap:10px}
+  .main-stage.split{justify-content:center}
+  .poem-panel{width:100%!important;max-width:100%!important;height:clamp(280px,40vh,380px)!important;margin-bottom:8px;order:-1}
+  .poem-panel:not(.open){opacity:0;height:0!important;max-width:0!important;padding:0;margin:0;border:0;overflow:hidden;pointer-events:none}
+  .main-stage.split .turntable-wrap{width:clamp(300px,85vw,440px)}
+  .poem-scroll{padding:4px 22px 18px}
+}
+</style>
+</head>
+<body>
+<iframe id="sc-frame" allow="autoplay" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;top:-300px" src="https://w.soundcloud.com/player/?url=https%3A%2F%2Fsoundcloud.com%2Ftomrosenthal1%2Fas-luck-would-have-it&auto_play=false&buying=false&liking=false&download=false&sharing=false&show_artwork=false&show_comments=false&show_playcount=false&show_user=false&hide_related=true&visual=false"></iframe>
+<div id="app"></div>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+<script src="https://w.soundcloud.com/player/api.js"></script>
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback,memo}=React;
+
+const POEM_LINES=[
+"how lucky am I",
+"that somehow, the universe let me find you",
+"without even searching",
+"that whatever pulls the stars together",
+"decided, just once, to pull us too",
+"in the same direction",
+"at the same time and it led me here",
+"to one of the best things i'll ever know: you",
+"",
+"the thing about life is",
+"we're all walking so close to each other",
+"almost touching, barely missing",
+"like parallel lines that don't even realize",
+"how close they are",
+"",
+"but somehow, we crossed",
+"somehow, we touched",
+"and i remember who i was before that",
+"but I havent been the same since",
+"",
+"meeting you felt like starting to understand",
+"something I didnt even know i was meant to learn",
+"like pieces quietly falling into place",
+"and it feels right",
+"",
+"and maybe it's not luck, maybe it's gravity",
+"or the quiet pull of something that's always known",
+"maybe souls really do orbit",
+"waiting to land somewhere that feels like home",
+"",
+"I didn't even know I was lost until I met you",
+"and somehow, without a map,",
+"you led me home",
+"",
+"and for that- I will always,",
+"always feel lucky"
+];
+const FDUR=168000,MDELAY=5000,PBUF=15000;
+
+/* ═══ AUDIO ═══ */
+class Aud{
+  constructor(){this.ctx=null;this.ck=null;this.ckg=null;this.scr=null}
+  init(){if(!this.ctx)this.ctx=new(window.AudioContext||window.webkitAudioContext)()}
+  _buf(dur,h){
+    const s=this.ctx.sampleRate,l=s*dur,b=this.ctx.createBuffer(1,l,s),d=b.getChannelData(0);
+    for(let i=0;i<l;i++){const t=i/s,e=h?(t<.1?t/.1:t<.4?1:Math.max(0,1-(t-.4)/(dur-.4))):1;
+    d[i]=((Math.random()*2-1)*(h?.04:.01))*e;if(Math.random()<(h?.008:.003))d[i]+=(Math.random()-.5)*(h?.2:.05)*e;
+    if(Math.random()<(h?.015:.0008))d[i]+=(Math.random()-.5)*(h?.12:.1)*e}
+    for(let i=1;i<l;i++)d[i]=d[i]*(h?.35:.2)+d[i-1]*(h?.65:.8);return b;
+  }
+  _lf(){const l=this.ctx.createBiquadFilter();l.type='lowpass';l.frequency.value=4500;const h=this.ctx.createBiquadFilter();h.type='highpass';h.frequency.value=80;const p=this.ctx.createBiquadFilter();p.type='peaking';p.frequency.value=300;p.gain.value=3;p.Q.value=.8;l.connect(h);h.connect(p);return{i:l,o:p}}
+  startCk(v){this.init();if(this.ck)return;const b=this._buf(4,false),s=this.ctx.createBufferSource();s.buffer=b;s.loop=true;const g=this.ctx.createGain();g.gain.value=v*.1;const f=this._lf();s.connect(f.i);f.o.connect(g);g.connect(this.ctx.destination);s.start();this.ck=s;this.ckg=g}
+  setCkV(v){if(this.ckg)this.ckg.gain.value=v*.1}
+  stopCk(){try{this.ck?.stop()}catch(e){}this.ck=null;this.ckg=null}
+  arm(v){this.init();const b=this._buf(2,true),s=this.ctx.createBufferSource();s.buffer=b;const g=this.ctx.createGain();g.gain.value=v*.25;const f=this._lf();s.connect(f.i);f.o.connect(g);g.connect(this.ctx.destination);s.start()}
+  tick(v){this.init();const c=this.ctx,o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=700+Math.random()*300;g.gain.value=v*0.055;g.gain.setTargetAtTime(0,c.currentTime+.012,.007);o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+.022)}
+  startScr(v){this.init();if(this.scr)return;const c=this.ctx,b=c.createBuffer(1,c.sampleRate*2,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++){d[i]=(Math.random()*2-1)*.06;if(Math.random()<.01)d[i]+=(Math.random()-.5)*.3}for(let i=1;i<d.length;i++)d[i]=d[i]*.4+d[i-1]*.6;const s=c.createBufferSource();s.buffer=b;s.loop=true;const g=c.createGain();g.gain.value=v*.2;const f=this._lf();s.connect(f.i);f.o.connect(g);g.connect(c.destination);s.start();this.scr=s}
+  stopScr(){try{this.scr?.stop()}catch(e){}this.scr=null}
+  stopAll(){this.stopCk();this.stopScr()}
+}
+
+/* ═══ SVG TURNTABLE ═══ */
+const TT=memo(function({armAngle,discStyle,screenGlow,onArmTip,onStopBtn,volume,onVolume,progress,onProgressDown,onDiscDown}){
+  const gr=[];for(let r=58;r<=176;r+=2)gr.push(r);
+  // Progress bar geometry (above platter, centered)
+  const pbX=105,pbY=50,pbW=200,pbH=5;
+  const pinX=pbX+progress*pbW;
+  return(<svg viewBox="0 0 560 560" className="turntable-svg" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <pattern id="wP" width="400" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(5)"><rect width="400" height="6" fill="#8B6943"/><rect y="0" width="400" height=".9" fill="#9E7D55" opacity=".18"/><rect y="1.8" width="400" height=".5" fill="#755838" opacity=".14"/><rect y="3.2" width="400" height=".7" fill="#9E7D55" opacity=".12"/></pattern>
+      <linearGradient id="oG" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#B09868"/><stop offset="50%" stopColor="#8B6943"/><stop offset="100%" stopColor="#6B4E30"/></linearGradient>
+      <linearGradient id="oE" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#7A5D3A"/><stop offset="100%" stopColor="#5C4228"/></linearGradient>
+      <linearGradient id="fG" x1=".5" y1="0" x2=".5" y2="1"><stop offset="0%" stopColor="#303830"/><stop offset="100%" stopColor="#252D24"/></linearGradient>
+      <radialGradient id="vG" cx=".48" cy=".47" r=".52"><stop offset="0%" stopColor="#202020"/><stop offset="50%" stopColor="#0f0f0f"/><stop offset="100%" stopColor="#0a0a0a"/></radialGradient>
+      <radialGradient id="lG" cx=".44" cy=".42" r=".56"><stop offset="0%" stopColor="#FBF2DC"/><stop offset="50%" stopColor="#F2E8D0"/><stop offset="100%" stopColor="#E2D6BA"/></radialGradient>
+      <linearGradient id="aG" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#A8AEB8"/><stop offset="30%" stopColor="#DEE0E8"/><stop offset="50%" stopColor="#D0D4DC"/><stop offset="100%" stopColor="#B0B4BE"/></linearGradient>
+      <linearGradient id="sG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#0E1A0E"/><stop offset="100%" stopColor="#0A240A"/></linearGradient>
+      <filter id="ds"><feDropShadow dx="0" dy="3" stdDeviation="5" floodColor="#3E2A1E" floodOpacity=".18"/></filter>
+      <filter id="gl"><feGaussianBlur in="SourceGraphic" stdDeviation="1" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <filter id="inS"><feDropShadow dx="0" dy="1" stdDeviation="2" floodColor="#000" floodOpacity=".15"/></filter>
+      <clipPath id="sC"><rect x="0" y="0" width="92" height="26" rx="2"/></clipPath>
+    </defs>
+    {/* CHASSIS */}
+    <rect x="16" y="16" width="528" height="528" rx="14" fill="url(#oE)" stroke="#4A3420" strokeWidth="1"/>
+    <rect x="18" y="18" width="524" height="524" rx="13" fill="url(#oG)" stroke="#5C4228" strokeWidth=".5"/>
+    <rect x="18" y="18" width="524" height="524" rx="13" fill="url(#wP)" opacity=".32"/>
+    <rect x="20" y="20" width="520" height="520" rx="12" fill="none" stroke="#C4A87A" strokeWidth=".4" opacity=".25"/>
+
+    {/* ═══ PROGRESS BAR (top area) ═══ */}
+    <g>
+      <text x={pbX} y={pbY-8} fontFamily="'Courier Prime',monospace" fontSize="5" fill="#A89880" opacity=".45">PROGRESS</text>
+      {/* Track bg */}
+      <rect x={pbX} y={pbY} width={pbW} height={pbH} rx="2.5" fill="#3E2A1E" stroke="#4A3820" strokeWidth=".5"/>
+      {/* Filled portion */}
+      <rect x={pbX} y={pbY} width={Math.max(0,progress*pbW)} height={pbH} rx="2.5" fill={screenGlow?"#5ABF5A":"#3A5A3A"} opacity={screenGlow?.7:.3}/>
+      {/* Pin/thumb */}
+      <circle cx={pinX} cy={pbY+pbH/2} r="7" fill="#A89880" stroke="#8B7A62" strokeWidth=".8" style={{cursor:'pointer'}}/>
+      <circle cx={pinX} cy={pbY+pbH/2} r="3.5" fill="#C8B898"/>
+      {/* Invisible wider hit area */}
+      <rect x={pbX-10} y={pbY-15} width={pbW+20} height={pbH+30} fill="transparent" style={{cursor:'pointer'}} onMouseDown={onProgressDown} onTouchStart={onProgressDown}/>
+    </g>
+
+    {/* PLATTER */}
+    <circle cx="238" cy="275" r="204" fill="url(#fG)" stroke="#1C241A" strokeWidth="1"/>
+    {Array.from({length:60}).map((_,i)=>{const a=i*6*Math.PI/180;return <circle key={'f'+i} cx={238+198*Math.cos(a)} cy={275+198*Math.sin(a)} r=".7" fill="#3A4438" opacity=".25"/>})}
+    <circle cx="238" cy="275" r="196" fill="none" stroke="#404840" strokeWidth="2.5" opacity=".18"/>
+    {/* VINYL */}
+    <g style={discStyle}>
+      <circle cx="238" cy="275" r="188" fill="url(#vG)" stroke="#050505" strokeWidth=".5"/>
+      {gr.map((r,i)=><circle key={'g'+i} cx="238" cy="275" r={r} fill="none" stroke={i%3===0?"#1d1d1d":"#131313"} strokeWidth={i%5===0?".25":".14"} opacity={i%3===0?.35:.2}/>)}
+      <circle cx="238" cy="275" r="50" fill="url(#lG)" stroke="#C8B898" strokeWidth=".8"/>
+      <circle cx="238" cy="275" r="47" fill="none" stroke="#D8CCA8" strokeWidth=".3" opacity=".5"/>
+      <text x="238" y="266" textAnchor="middle" fontFamily="Georgia,serif" fontSize="7.5" fill="#3A2A18" opacity=".95" fontStyle="italic">As Luck Would Have It</text>
+      <line x1="210" y1="270" x2="266" y2="270" stroke="#C8B898" strokeWidth=".4" opacity=".4"/>
+      <text x="238" y="280" textAnchor="middle" fontFamily="'Louis George Cafe',sans-serif" fontSize="5.8" fill="#5C4A34" opacity=".8">Tom Rosenthal</text>
+      <text x="238" y="290" textAnchor="middle" fontFamily="'Courier Prime',monospace" fontSize="3.8" fill="#8B7A62" opacity=".55">{"33\u2153 RPM \xB7 SIDE A"}</text>
+      <circle cx="238" cy="275" r="6" fill="#2E382C" stroke="#232B22" strokeWidth=".8"/><circle cx="238" cy="275" r="2.8" fill="#3A4438"/>
+      <circle cx="238" cy="275" r="185" fill="transparent" style={{cursor:'grab'}} onMouseDown={onDiscDown} onTouchStart={onDiscDown}/>
+    </g>
+
+    {/* SCREEN */}
+    <g className="tt-screen" transform="translate(420,365)">
+      <rect x="-4" y="-4" width="100" height="60" rx="7" fill="#5C4228" stroke="#4A3820" strokeWidth="1"/>
+      <rect x="0" y="0" width="92" height="52" rx="5" fill="url(#sG)" stroke="#2A4A2A" strokeWidth=".5" filter="url(#inS)"/>
+      {Array.from({length:10}).map((_,i)=><line key={'sl'+i} x1="2" y1={4+i*5} x2="90" y2={4+i*5} stroke="#0A1E0A" strokeWidth=".3" opacity=".25"/>)}
+      {screenGlow?<g clipPath="url(#sC)" transform="translate(0,5)"><text fontFamily="'Courier Prime',monospace" fontSize="9.5" fill="#6AEF6A" opacity=".95" filter="url(#gl)" fontWeight="700"><animate attributeName="x" from="96" to="-380" dur="18s" repeatCount="indefinite"/>{'\u266A  "how lucky am I" \u2014 Maoreen Rose        \u266A  "how lucky am I" \u2014 Maoreen Rose'}</text></g>
+      :<text x="46" y="20" textAnchor="middle" fontFamily="'Courier Prime',monospace" fontSize="7.5" fill="#2A5A2A" opacity=".45" fontWeight="700">READY</text>}
+      <text x="46" y="42" textAnchor="middle" fontFamily="'Courier Prime',monospace" fontSize="5.5" fill={screenGlow?"#5ABF5A":"#1A3A1A"} opacity={screenGlow?.7:.3} fontWeight="700">{screenGlow?"\u25B6 NOW PLAYING":"\u25A0 STOPPED"}</text>
+      <circle cx="10" cy="46" r="2.5" fill={screenGlow?"#5AEF5A":"#1A3A1A"} opacity={screenGlow?.85:.25}/>
+    </g>
+
+    {/* ═══ VOLUME DIAL (below screen) ═══ */}
+    <g transform="translate(420,445)">
+      {/* Volume icon */}
+      <g transform="translate(-2,10)" opacity=".4">
+        <path d="M0,4 L3,4 L7,0 L7,12 L3,8 L0,8 Z" fill="#A89880" transform="scale(0.8)"/>
+        <path d="M8,2 Q12,6 8,10" fill="none" stroke="#A89880" strokeWidth=".8" opacity=".6"/>
+      </g>
+      {/* Track */}
+      <rect x="12" y="10" width="80" height="4" rx="2" fill="#3E2A1E" stroke="#4A3820" strokeWidth=".3"/>
+      {/* Filled */}
+      <rect x="12" y="10" width={volume*80} height="4" rx="2" fill="#5ABF5A" opacity=".5"/>
+      {/* Thumb */}
+      <circle cx={12+volume*80} cy="12" r="5.5" fill="#A89880" stroke="#8B7A62" strokeWidth=".5"/>
+      <circle cx={12+volume*80} cy="12" r="2.5" fill="#C8B898"/>
+      {/* Hit area */}
+      <rect x="8" y="-2" width="90" height="28" fill="transparent" style={{cursor:'pointer'}}
+        onMouseDown={e=>{e.stopPropagation();const rect=e.target.getBoundingClientRect();const handleMove=(ev)=>{const bx=e.target.closest('svg').querySelector('[transform="translate(420,445)"]');if(!bx)return;const svgR=e.target.closest('svg').getBoundingClientRect();const sx=svgR.width/560;const baseX=(420+12)*sx+svgR.left;const w=80*sx;const cx=(ev.touches?ev.touches[0]:ev).clientX;const v=Math.max(0,Math.min(1,(cx-baseX)/w));onVolume(v)};handleMove(e);const up=()=>{document.removeEventListener('mousemove',handleMove);document.removeEventListener('mouseup',up);document.removeEventListener('touchmove',handleMove);document.removeEventListener('touchend',up)};document.addEventListener('mousemove',handleMove);document.addEventListener('mouseup',up);document.addEventListener('touchmove',handleMove);document.addEventListener('touchend',up)}}
+        onTouchStart={e=>{e.stopPropagation();const handleMove=(ev)=>{const svgR=e.target.closest('svg').getBoundingClientRect();const sx=svgR.width/560;const baseX=(420+12)*sx+svgR.left;const w=80*sx;const cx=(ev.touches?ev.touches[0]:ev).clientX;const v=Math.max(0,Math.min(1,(cx-baseX)/w));onVolume(v)};handleMove(e);const up=()=>{document.removeEventListener('touchmove',handleMove);document.removeEventListener('touchend',up)};document.addEventListener('touchmove',handleMove);document.addEventListener('touchend',up)}}
+      />
+      <text x="46" y="28" textAnchor="middle" fontFamily="'Courier Prime',monospace" fontSize="4.5" fill="#A89880" opacity=".35">VOLUME</text>
+    </g>
+
+    {/* STOP BTN */}
+    <g transform="translate(470,500)" style={{cursor:'pointer'}} onClick={onStopBtn}>
+      <circle r="15" fill="#5C4228" stroke="#4A3820" strokeWidth="1"/><circle r="11" fill="#4A3820" stroke="#3E2A1E" strokeWidth=".5"/>
+      <rect x="-4" y="-4" width="8" height="8" rx="1.5" fill="#A89880" opacity=".75"/>
+      <text x="0" y="22" textAnchor="middle" fontFamily="'Courier Prime',monospace" fontSize="5" fill="#A89880" opacity=".4">STOP</text>
+    </g>
+
+    {/* SPEED */}
+    <g transform="translate(420,500)"><circle r="8" fill="#5C4228" stroke="#4A3820" strokeWidth=".8"/><circle r="5" fill="#A89880"/><line x1="0" y1="-3" x2="0" y2="3" stroke="#5C4228" strokeWidth="1" strokeLinecap="round"/><text x="0" y="15" textAnchor="middle" fontFamily="'Courier Prime',monospace" fontSize="4" fill="#A89880" opacity=".35">33</text></g>
+
+    {/* POWER LED */}
+    <circle cx="498" cy="530" r="3" fill={screenGlow?"#5ABF5A":"#2A4A2A"} stroke="#1A3A1A" strokeWidth=".4" opacity={screenGlow?.6:.25}/>
+
+    {/* CORNERS */}
+    {[[34,34],[526,34],[34,526],[526,526]].map(([x,y],i)=><g key={'c'+i}><circle cx={x} cy={y} r="6" fill="#6B4E30" stroke="#5C4228" strokeWidth=".5"/><circle cx={x} cy={y} r="3" fill="#5C4228"/></g>)}
+
+    {/* TONEARM */}
+    <g transform="translate(445,112)" filter="url(#ds)">
+      <circle r="24" fill="#5C4228" stroke="#4A3820" strokeWidth="1"/><circle r="16" fill="var(--chrome)" stroke="var(--silver)" strokeWidth="1"/><circle r="9" fill="var(--silver-light)"/><circle r="4" fill="var(--chrome)"/>
+      <g style={{transform:`rotate(${armAngle}deg)`,transformOrigin:'0px 0px',transition:'transform 0.65s cubic-bezier(.22,.88,.36,1)'}}>
+        <ellipse cx="0" cy="-18" rx="13" ry="11" fill="var(--silver)" stroke="#A0A4B0" strokeWidth=".7"/>
+        <rect x="-3.2" y="0" width="6.4" height="196" rx="3.2" fill="url(#aG)" stroke="#A0A4B0" strokeWidth=".3"/>
+        <circle cx="9" cy="24" r="3.2" fill="var(--silver)" stroke="#A0A4B0" strokeWidth=".3"/>
+        <g transform="translate(0,194)"><rect x="-5" y="0" width="10" height="8" rx="2" fill="var(--silver)" stroke="#A0A4B0" strokeWidth=".4"/><path d="M-7.5,8L-10,30L10,30L7.5,8Z" fill="#7C808C" stroke="#6C707C" strokeWidth=".5"/><rect x="-6" y="18" width="12" height="14" rx="2" fill="#4C505C"/><line x1="0" y1="32" x2="0" y2="38" stroke="#D0D4DC" strokeWidth="1.3" strokeLinecap="round"/><circle cx="0" cy="38.5" r="1.3" fill="#E8ECF0"/></g>
+        <circle cx="0" cy="232" r="45" fill="transparent" style={{cursor:'grab'}} onMouseDown={onArmTip} onTouchStart={onArmTip}/>
+      </g>
+    </g>
+  </svg>);
+});
+
+/* ═══ APP ═══ */
+function App(){
+  const [phase,setPhase]=useState("idle");
+  const [armAngle,setArmAngle]=useState(0);
+  const [discSpin,setDiscSpin]=useState(false);
+  const [discAngle,setDiscAngle]=useState(0);
+  const [discDrag,setDiscDrag]=useState(false);
+  const [panelOpen,setPanelOpen]=useState(false);
+  const [panelFlying,setPanelFlying]=useState(false);
+  const [showReplay,setShowReplay]=useState(false);
+  const [isPaused,setIsPaused]=useState(false);
+  const [revealedLines,setRevealedLines]=useState(0);
+  const [volume,setVolume]=useState(0.7);
+  const [showHint,setShowHint]=useState(false);
+  const [showCredit,setShowCredit]=useState(false);
+  const [panelPos,setPanelPos]=useState(null);
+  const [panelDrag,setPanelDrag]=useState(false);
+  const [isSplit,setIsSplit]=useState(false);
+  const [progress,setProgress]=useState(0);
+
+  const scW=useRef(null);const dur=useRef(FDUR);
+  const lineTimer=useRef(null);const mTimer=useRef(null);
+  const scrollEl=useRef(null);const panelEl=useRef(null);
+  const audio=useRef(new Aud());
+  const autoScroll=useRef(true);const userScrollT=useRef(null);
+  const discRef=useRef({active:false,lastA:0,cum:0,saved:0});
+  const panelDragRef=useRef({sx:0,sy:0,ox:0,oy:0});
+  const curLine=useRef(0);
+  const progInterval=useRef(null);
+
+  // SC init
+  useEffect(()=>{
+    const init=()=>{try{if(!window.SC?.Widget)return;const w=window.SC.Widget(document.getElementById('sc-frame'));scW.current=w;w.bind(window.SC.Widget.Events.READY,()=>{w.getDuration(d=>{if(d>0)dur.current=d});w.setVolume(volume*100)});w.bind(window.SC.Widget.Events.FINISH,()=>finishAll())}catch(e){}};
+    if(window.SC)init();else setTimeout(init,2500);
+  },[]);
+  useEffect(()=>{try{scW.current?.setVolume(volume*100)}catch(e){};audio.current.setCkV(volume)},[volume]);
+
+  // Progress polling
+  useEffect(()=>{
+    if((phase==="playing"||phase==="lowering")&&!isPaused&&!discDrag){
+      progInterval.current=setInterval(()=>{
+        scW.current?.getPosition(p=>{if(p>0)setProgress(Math.min(1,p/dur.current))});
+      },500);
+      return()=>clearInterval(progInterval.current);
+    }else{clearInterval(progInterval.current)}
+  },[phase,isPaused,discDrag]);
+
+  const doScroll=useCallback(()=>{if(!scrollEl.current||!autoScroll.current)return;scrollEl.current.scrollTop=scrollEl.current.scrollHeight},[]);
+  const onUserScroll=useCallback(()=>{
+    if(!scrollEl.current)return;const el=scrollEl.current;
+    if(el.scrollHeight-el.scrollTop-el.clientHeight>30){autoScroll.current=false;clearTimeout(userScrollT.current);userScrollT.current=setTimeout(()=>{autoScroll.current=true;doScroll()},3000)}
+    else autoScroll.current=true;
+  },[doScroll]);
+
+  /* ═══ LINE REVEAL ═══ */
+  const getLineDelay=useCallback(()=>{
+    const total=POEM_LINES.length;const poemDur=dur.current-MDELAY-PBUF;
+    return Math.max(200,(poemDur/total)*0.6);
+  },[]);
+
+  const revealFrom=useCallback((startLine)=>{
+    clearTimeout(lineTimer.current);
+    curLine.current=startLine;setRevealedLines(startLine);
+    if(startLine<=0)setShowCredit(false);
+    const delay=getLineDelay();
+    const next=()=>{
+      if(curLine.current>=POEM_LINES.length){setTimeout(()=>setShowCredit(true),600);return}
+      curLine.current++;setRevealedLines(curLine.current);
+      if(POEM_LINES[curLine.current-1]!=='')audio.current.tick(volume);
+      requestAnimationFrame(doScroll);
+      if(curLine.current>6)setShowHint(true);
+      const isBlank=POEM_LINES[curLine.current-1]==='';
+      const lineLen=POEM_LINES[curLine.current-1]?.length||0;
+      const lenFactor=Math.max(0.4,Math.min(1.6,lineLen/35));
+      lineTimer.current=setTimeout(next,isBlank?delay*0.4:delay*lenFactor);
+    };next();
+  },[doScroll,getLineDelay,volume]);
+
+  const pauseReveal=useCallback(()=>clearTimeout(lineTimer.current),[]);
+  const stopReveal=useCallback(()=>{clearTimeout(lineTimer.current);curLine.current=0;setRevealedLines(0);setShowCredit(false)},[]);
+
+  /* ═══ SEEK TO POSITION (shared by progress bar & disc drag) ═══ */
+  const seekTo=useCallback((musicPos)=>{
+    const mp=Math.max(0,Math.min(dur.current,musicPos));
+    const mfp=dur.current-MDELAY-PBUF;
+    const prog=Math.max(0,Math.min(1,(mp-MDELAY)/mfp));
+    const nl=Math.min(POEM_LINES.length,Math.floor(prog*POEM_LINES.length));
+    try{scW.current?.seekTo(mp);scW.current?.play()}catch(ex){}
+    setProgress(mp/dur.current);
+    setDiscSpin(true);revealFrom(nl);
+  },[revealFrom]);
+
+  /* ═══ PROGRESS BAR DRAG ═══ */
+  const onProgressDown=useCallback((e)=>{
+    if(phase!=="playing"&&phase!=="lowering")return;
+    e.preventDefault();e.stopPropagation();
+    pauseReveal();
+    const svg=e.target.closest('svg');const svgR=svg.getBoundingClientRect();
+    const sx=svgR.width/560;
+    const barLeft=(105)*sx+svgR.left;const barW=200*sx;
+    const calcPos=(ev)=>{
+      const cx=(ev.touches?ev.touches[0]:ev).clientX;
+      const pct=Math.max(0,Math.min(1,(cx-barLeft)/barW));
+      return pct*dur.current;
+    };
+    // Pause during drag
+    try{scW.current?.pause()}catch(ex){}
+    setDiscSpin(false);
+    audio.current.startScr(volume);
+
+    const onM=(ev)=>{
+      ev.preventDefault();
+      const mp=calcPos(ev);
+      setProgress(mp/dur.current);
+      // Update poem position in real time
+      const mfp=dur.current-MDELAY-PBUF;
+      const prog=Math.max(0,Math.min(1,(mp-MDELAY)/mfp));
+      const nl=Math.min(POEM_LINES.length,Math.floor(prog*POEM_LINES.length));
+      setRevealedLines(nl);curLine.current=nl;
+    };
+    const onU=(ev)=>{
+      audio.current.stopScr();
+      document.removeEventListener('mousemove',onM);document.removeEventListener('mouseup',onU);
+      document.removeEventListener('touchmove',onM);document.removeEventListener('touchend',onU);
+      const mp=calcPos(ev);
+      seekTo(mp);
+    };
+    // Initial position
+    onM(e);
+    document.addEventListener('mousemove',onM,{passive:false});document.addEventListener('mouseup',onU);
+    document.addEventListener('touchmove',onM,{passive:false});document.addEventListener('touchend',onU);
+  },[phase,pauseReveal,volume,seekTo]);
+
+  /* ═══ DISC DRAG ═══ */
+  const getAng=(e,cx,cy)=>{const t=e.touches?e.touches[0]:e;return Math.atan2(t.clientY-cy,t.clientX-cx)};
+  const onDiscDown=useCallback((e)=>{
+    if(phase!=="playing"||isPaused)return;
+    e.preventDefault();e.stopPropagation();
+    pauseReveal();try{scW.current?.pause()}catch(ex){}
+    setDiscSpin(false);setDiscDrag(true);
+    audio.current.startScr(volume);
+    const svg=e.target.closest('svg');const r=svg.getBoundingClientRect();
+    const cx=r.left+(238/560)*r.width,cy=r.top+(275/560)*r.height;
+    const startA=getAng(e,cx,cy);
+    const d=discRef.current;d.active=true;d.lastA=startA;d.cum=0;
+    scW.current?.getPosition(p=>{d.saved=p});
+    const onM=(ev)=>{ev.preventDefault();const a=getAng(ev,cx,cy);let dl=a-d.lastA;if(dl>Math.PI)dl-=2*Math.PI;if(dl<-Math.PI)dl+=2*Math.PI;d.cum+=dl;d.lastA=a;setDiscAngle(p=>p+dl*(180/Math.PI))};
+    const onU=()=>{
+      d.active=false;setDiscDrag(false);audio.current.stopScr();
+      document.removeEventListener('mousemove',onM);document.removeEventListener('mouseup',onU);
+      document.removeEventListener('touchmove',onM);document.removeEventListener('touchend',onU);
+      const rot=d.cum/(2*Math.PI);const rw=rot*5000;
+      seekTo(d.saved+rw);
+    };
+    document.addEventListener('mousemove',onM,{passive:false});document.addEventListener('mouseup',onU);
+    document.addEventListener('touchmove',onM,{passive:false});document.addEventListener('touchend',onU);
+  },[phase,isPaused,pauseReveal,volume,seekTo]);
+
+  const discStyle=discSpin?{animation:'spin 2.34s linear infinite',transformOrigin:'238px 275px'}:
+    discDrag?{transform:`rotate(${discAngle}deg)`,transformOrigin:'238px 275px',transition:'none'}:{transformOrigin:'238px 275px'};
+
+  /* ═══ PANEL DRAG ═══ */
+  const onPanelDown=useCallback((e)=>{
+    if(window.innerWidth<800)return;
+    e.preventDefault();const t=e.touches?e.touches[0]:e;
+    const el=panelEl.current;if(!el)return;
+    const r=el.getBoundingClientRect();
+    const d=panelDragRef.current;d.sx=t.clientX;d.sy=t.clientY;d.ox=r.left;d.oy=r.top;
+    setPanelDrag(true);
+    const onM=(ev)=>{const p=ev.touches?ev.touches[0]:ev;setPanelPos({x:d.ox+(p.clientX-d.sx),y:d.oy+(p.clientY-d.sy)})};
+    const onU=()=>{setPanelDrag(false);document.removeEventListener('mousemove',onM);document.removeEventListener('mouseup',onU);document.removeEventListener('touchmove',onM);document.removeEventListener('touchend',onU)};
+    document.addEventListener('mousemove',onM);document.addEventListener('mouseup',onU);
+    document.addEventListener('touchmove',onM);document.addEventListener('touchend',onU);
+  },[]);
+
+  const panelStyle=panelPos?{position:'fixed',left:panelPos.x+'px',top:panelPos.y+'px',width:'clamp(380px,44vw,540px)',maxWidth:'clamp(380px,44vw,540px)'}:{};
+
+  /* ═══ GET SCREEN POSITION (for fly animation target) ═══ */
+  const getScreenPos=useCallback(()=>{
+    const svg=document.querySelector('.turntable-svg');
+    if(!svg)return{x:window.innerWidth/2,y:window.innerHeight/2};
+    const r=svg.getBoundingClientRect();const sx=r.width/560;
+    // Screen is at translate(420,365), size ~92x52
+    return{x:r.left+466*sx,y:r.top+391*sx};
+  },[]);
+
+  /* ═══ PHASES ═══ */
+  const dropArm=useCallback(()=>{
+    if(phase!=="idle")return;
+    setPhase("lowering");setArmAngle(42);setDiscSpin(true);setIsSplit(true);
+    audio.current.arm(volume);audio.current.startCk(volume);
+    try{scW.current?.setVolume(volume*100);scW.current?.seekTo(0);scW.current?.play()}catch(e){}
+    mTimer.current=setTimeout(()=>{
+      setPanelOpen(true);
+      setTimeout(()=>{revealFrom(0);setPhase("playing")},500);
+    },MDELAY);
+  },[phase,volume,revealFrom]);
+
+  const liftArm=useCallback(()=>{
+    if(phase!=="playing"||isPaused)return;
+    setIsPaused(true);setArmAngle(20);setDiscSpin(false);pauseReveal();
+    audio.current.arm(volume);audio.current.setCkV(0);
+    try{scW.current?.pause()}catch(e){}
+  },[phase,isPaused,pauseReveal,volume]);
+
+  const dropBack=useCallback(()=>{
+    if(!isPaused)return;
+    setIsPaused(false);setArmAngle(42);setDiscSpin(true);
+    audio.current.arm(volume);audio.current.setCkV(volume);
+    revealFrom(curLine.current);
+    try{scW.current?.play()}catch(e){}
+  },[isPaused,volume,revealFrom]);
+
+  const stopAll=useCallback(()=>{
+    if(phase!=="playing"&&phase!=="lowering")return;
+    clearTimeout(mTimer.current);pauseReveal();setDiscSpin(false);setIsPaused(false);
+    audio.current.arm(volume);
+    try{scW.current?.pause();scW.current?.seekTo(0)}catch(e){}
+    // Fly modal to screen position
+    const screenP=getScreenPos();
+    const el=panelEl.current;
+    if(el&&panelPos){
+      // Already detached — fly from current pos to screen
+      el.style.transition='all .7s cubic-bezier(.6,.05,.4,1)';
+      el.style.left=screenP.x+'px';el.style.top=screenP.y+'px';
+      el.style.transform='scale(0.04)';el.style.opacity='0';
+    }else if(el){
+      // In flex layout — add flying class
+      setPanelFlying(true);
+    }
+    // Simultaneously slide turntable back + clean up
+    setIsSplit(false);
+    setTimeout(()=>{
+      audio.current.stopAll();
+      setPanelOpen(false);setPanelFlying(false);setPanelPos(null);
+      stopReveal();setProgress(0);setShowHint(false);
+      if(el){el.style.transition='';el.style.left='';el.style.top='';el.style.transform='';el.style.opacity=''}
+      setArmAngle(0);setPhase("idle");
+    },750);
+  },[phase,pauseReveal,stopReveal,volume,getScreenPos,panelPos]);
+
+  const finishAll=useCallback(()=>{
+    clearTimeout(lineTimer.current);setRevealedLines(POEM_LINES.length);
+    setDiscSpin(false);audio.current.stopAll();setShowHint(false);setShowCredit(true);
+    setProgress(1);
+    autoScroll.current=true;requestAnimationFrame(()=>{if(scrollEl.current)scrollEl.current.scrollTop=scrollEl.current.scrollHeight});
+    setPhase("done");setShowReplay(true);
+  },[]);
+
+  useEffect(()=>{if(phase==="playing"&&!isPaused&&!discDrag){const t=setTimeout(()=>{setPhase(p=>{if(p==="playing")finishAll();return p})},dur.current+3000);return()=>clearTimeout(t)}},[phase,isPaused,discDrag,finishAll]);
+
+  const replay=useCallback(()=>{
+    clearTimeout(lineTimer.current);clearTimeout(mTimer.current);audio.current.stopAll();
+    setPhase("idle");setArmAngle(0);setDiscSpin(false);setPanelOpen(false);setPanelFlying(false);
+    setShowReplay(false);setIsPaused(false);setRevealedLines(0);setShowHint(false);setShowCredit(false);
+    setPanelPos(null);setIsSplit(false);setProgress(0);autoScroll.current=true;
+    try{scW.current?.seekTo(0);scW.current?.pause()}catch(e){}
+  },[]);
+
+  const onArmTip=useCallback(e=>{e.preventDefault();e.stopPropagation();if(phase==="idle")dropArm();else if(phase==="playing"&&!isPaused)liftArm();else if(phase==="playing"&&isPaused)dropBack()},[phase,isPaused,dropArm,liftArm,dropBack]);
+  const onStop=useCallback(e=>{e?.preventDefault();e?.stopPropagation();stopAll()},[stopAll]);
+  const playing=phase==="playing"||phase==="lowering";
+
+  const hwDur=(line)=>{const len=line.length;return Math.max(0.4,Math.min(1.8,len/25))+'s'};
+
+  return(
+    <div id="app">
+      <div className={`main-stage${isSplit?' split':''}`}>
+        <div ref={panelEl}
+          className={`poem-panel${panelOpen?' open':''}${panelDrag?' dragging':''}${panelPos?' detached':''}${panelFlying?' flying':''}`}
+          style={panelStyle}>
+          <div className="paper-texture"/>
+          <div className="paper-fold"/>
+          <div className="panel-handle" onMouseDown={onPanelDown} onTouchStart={onPanelDown}><span/></div>
+          <div className="panel-fade-t"/>
+          <div className="poem-scroll" ref={scrollEl} onScroll={onUserScroll}>
+            {POEM_LINES.map((line,i)=>{
+              if(i>=revealedLines)return null;
+              const isDone=i<revealedLines-1||phase==="done";
+              if(line==='')return <div key={i} className="poem-line empty done"/>;
+              return(
+                <span key={i}
+                  className={`poem-line${isDone?' done':' revealed'}`}
+                  style={!isDone?{'--hw-dur':hwDur(line)}:{}}>
+                  {line}
+                </span>
+              );
+            })}
+            <div className={`poem-credit${showCredit?' vis':''}`}>
+              {showCredit&&<span className="hw">{'\u2014'} Maoreen Rose</span>}
+            </div>
+          </div>
+          <div className="panel-fade-b"/>
+          <div className={`scroll-hint${showHint?' show':''}`}>{'\u2191'} scroll to re-read</div>
+        </div>
+        <div className="turntable-wrap">
+          <TT armAngle={armAngle} discStyle={discStyle} screenGlow={playing&&!isPaused&&!discDrag}
+            onArmTip={onArmTip} onStopBtn={onStop} volume={volume} onVolume={setVolume}
+            progress={progress} onProgressDown={onProgressDown} onDiscDown={onDiscDown}/>
+        </div>
+      </div>
+      {phase==="idle"&&<div className="hint hint-pulse">place the needle on the record to play {'\u266A'}</div>}
+      {(playing||isPaused)&&phase!=="done"&&(
+        <div className="controls-row">
+          {!isPaused?<button className="ctrl-btn" onClick={liftArm}>{'\u2191'} lift needle</button>:<button className="ctrl-btn" onClick={dropBack}>{'\u2193'} drop needle</button>}
+          <button className="ctrl-btn stop" onClick={stopAll}>{'\u25A0'} stop</button>
+        </div>
+      )}
+      {showReplay&&<button className="replay-btn" onClick={replay}>wanna hear it again?</button>}
+      <div className="credits">{"music: \u201Cas luck would have it\u201D \u2014 tom rosenthal \xB7 poem: \u201Chow lucky am I\u201D \u2014 maoreen rose"}</div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('app')).render(<App/>);
+
+</script>
+</body>
+</html>
